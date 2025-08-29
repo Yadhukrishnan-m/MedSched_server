@@ -1,21 +1,38 @@
-// Bystander Model
-const { DataTypes } = require("sequelize");
-const sequelize = require("../db");
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
 
-const User = sequelize.define("User", {
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
+const Bystander = sequelize.define(
+  "Bystander",
+  {
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true, // validates proper email format
+      },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    patientId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      // references: {
+      //   model: "Patients",
+      //   key: "id",
+      // },
+    },
   },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-});
+  {
+    timestamps: true, // createdAt & updatedAt enabled
+    tableName: "bystanders", // optional: to control table name
+  }
+);
 
-module.exports = User;
+export default Bystander;

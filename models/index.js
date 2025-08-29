@@ -1,5 +1,6 @@
-import sequelize from "../db.js";
-import User from "./Bystander.js";
+import sequelize from "../config/db.js";
+import Bystander from "./Bystander.js";
+import Otp from "./otp.js";
 
 try {
   await sequelize.sync({ alter: true });
@@ -8,4 +9,4 @@ try {
   console.error("❌ Sync error:", err);
 }
 
-export { User };
+export { Bystander, Otp };
