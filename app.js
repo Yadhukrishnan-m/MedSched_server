@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import bystanderRoutes from "./routes/bystanderRoutes.js";
+import doctorRoutes from "./routes/doctorRoutes.js";
+
 import morgan from "morgan";
 
 const app = express();
@@ -19,5 +21,7 @@ app.use(
 
 // Routes
 app.use("/bystander", bystanderRoutes);
+app.use("/doctor", doctorRoutes);
+
 
 export default app;

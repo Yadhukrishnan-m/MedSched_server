@@ -20,14 +20,7 @@ const Bystander = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    patientId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      // references: {
-      //   model: "Patients",
-      //   key: "id",
-      // },
-    },
+    patientId: { type: DataTypes.INTEGER, allowNull: true },
   },
   {
     timestamps: true, // createdAt & updatedAt enabled

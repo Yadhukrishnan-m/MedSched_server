@@ -1,10 +1,10 @@
-import { Bystander, Otp } from "../models/index.js";
+import { Bystander, Otp, Patient } from "../models/index.js";
 
 import jwt from "jsonwebtoken";
 
 
 import bcrypt from "bcrypt";
-import { generateOtpEmail, sendEmail } from "../services/emailService.js";
+import { generateOtpEmail, generatePatientRegistrationEmail, sendEmail } from "../services/emailService.js";
 
 // Utility to generate random 6-digit OTP
 function generateOtp() {
@@ -30,8 +30,6 @@ export const sendOtp = async (req, res) => {
 
     // save OTP in db
     await Otp.create({ email, otp: otpCode, expiresAt });
-
-    
 
     // TODO: send OTP via email/sms
     await sendEmail(email, "Your OTP Code for Registration", generateOtpEmail(otpCode));
@@ -230,3 +228,110 @@ export const logout = async (req, res) => {
     });
   }
 };
+
+
+export const verifyPatientOtpAndRegister = async (req, res) => {
+  try {
+    console.log('hi')
+    const { name, email, password, otp } = req.body;
+    const userId = req.userId; // from auth middleware
+
+    // find otp record
+    const otpRecord = await Otp.findOne({
+      where: { email },
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (!otpRecord) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    if (otpRecord.otp !== String(otp)) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // check expiry
+    if (otpRecord.expiresAt < new Date()) {
+      await otpRecord.destroy();
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    // hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // create Patient
+    const newPatient = await Patient.create({
+      name,
+      email: email.trim().toLowerCase(),
+      password: hashedPassword,
+    });
+
+    // update existing bystander with patientId
+    const bystander = await Bystander.findByPk(userId);
+    if (!bystander) {
+      return res.status(404).json({ message: "Bystander not found" });
+    }
+    bystander.patientId = newPatient.id;
+    await bystander.save();
+
+    // delete otp after success
+    await otpRecord.destroy();
+
+    // send success email with password
+    const emailContent = generatePatientRegistrationEmail(name, password);
+    await sendEmail(
+      email,
+      "MedSched - Patient Registration Successful",
+      emailContent
+    );
+
+    res.json({
+      success:true,
+      message: "Patient registered successfully",
+      patient: newPatient,
+      bystander,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Error verifying OTP",
+      error: error.message,
+    });
+  }
+};
+
+
+//  Send OTP
+export const patientsendOtp = async (req, res) => {
+  try {
+    console.log(req.body);
+    
+    const {  email  } = req.body;
+
+    // check if user already exists
+    const existing = await Patient.findOne({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    // generate OTP
+    const otpCode = generateOtp();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    // save OTP in db
+    await Otp.create({ email, otp: otpCode, expiresAt });
+
+    // TODO: send OTP via email/sms
+    await sendEmail(email, "Your OTP Code for patient Registration", generateOtpEmail(otpCode));
+
+    res.json({ message: "OTP sent successfully" });
+  } catch (error) {
+    console.log(error)
+    res
+      .status(500)
+      .json({ message: "Error sending OTP", error: error.message });
+  }
+};
+
+
+

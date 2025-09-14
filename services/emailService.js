@@ -102,3 +102,25 @@ export const generateOtpEmail = (otpCode) => {
   </html>
   `;
 };
+
+export const generatePatientRegistrationEmail = (name, password) => {
+  return `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+      <h2 style="color: #2E86C1;">Welcome to MedSched 🎉</h2>
+      <p>Dear <strong>${name}</strong>,</p>
+      
+      <p>We’re excited to let you know that your patient account has been successfully registered.</p>
+      
+      <p><strong>Your login details:</strong></p>
+      <ul>
+        <li><b>Email:</b> (the one you registered with)</li>
+        <li><b>Password:</b> ${password}</li>
+      </ul>
+
+      <p>🔒 For your security, please change your password after your first login.</p>
+
+      <br/>
+      <p>Best regards,<br/>The MedSched Team</p>
+    </div>
+  `;
+};
